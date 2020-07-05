@@ -35,6 +35,93 @@ spec:
           type: object
         spec:
           description: HttpMonitorSpec defines the desired state of HttpMonitor
+          properties:
+            period:
+              description: How frequently to execute the monitor requests
+              type: string
+            requests:
+              items:
+                properties:
+                  body:
+                    description: The request body
+                    type: string
+                  expected_response_codes:
+                    description: Expected response codes. By default, this will be
+                      anything seen as "ok"
+                    items:
+                      type: integer
+                    type: array
+                  headers:
+                    additionalProperties:
+                      items:
+                        type: string
+                      type: array
+                    description: Request headers
+                    type: object
+                  method:
+                    description: The HTTP method
+                    enum:
+                    - HEAD
+                    - GET
+                    - POST
+                    - PUT
+                    - PATCH
+                    - DELETE
+                    - OPTIONS
+                    type: string
+                  name:
+                    description: Name of the HTTP request. Used for debugging and
+                      metrics
+                    type: string
+                  query_params:
+                    additionalProperties:
+                      items:
+                        type: string
+                      type: array
+                    description: Any potential query parameters
+                    type: object
+                  target_service:
+                    description: A target service, to be used in metrics
+                    type: string
+                  timeout:
+                    description: The request timeout. Default is 5 seconds
+                    type: string
+                  url:
+                    description: HTTP(S) URL to make the request
+                    type: string
+                  variables:
+                    description: Extract variables for later requests to utilize
+                    items:
+                      properties:
+                        from:
+                          description: Where to extract the variable from
+                          enum:
+                          - body_yaml
+                          - body_json
+                          - body_raw
+                          - headers
+                          type: string
+                        json_path:
+                          description: The JSON path to the data.
+                          type: string
+                        name:
+                          description: The variable name
+                          type: string
+                      required:
+                      - from
+                      - name
+                      type: object
+                    type: array
+                required:
+                - method
+                - name
+                - target_service
+                - url
+                type: object
+              type: array
+          required:
+          - period
+          - requests
           type: object
         status:
           description: HttpMonitorStatus defines the observed state of HttpMonitor

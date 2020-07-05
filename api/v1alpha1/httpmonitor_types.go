@@ -31,10 +31,10 @@ import (
 type FromType string
 
 var (
-	FromTypeBodyYaml    FromType = "body_yaml"
-	FromTypeBodyJson    FromType = "body_json"
-	FromTypeBodyRaw    FromType = "body_raw"
-	FromTypeHeaders FromType = "headers"
+	FromTypeBodyYaml FromType = "body_yaml"
+	FromTypeBodyJson FromType = "body_json"
+	FromTypeBodyRaw  FromType = "body_raw"
+	FromTypeHeaders  FromType = "headers"
 )
 
 type Variable struct {
@@ -49,17 +49,17 @@ type Variable struct {
 	JsonPath string `json:"json_path,omitempty"`
 
 	// The final value of the variable, after its been extracted
-	Value string
+	Value string `json:"-"`
 }
 
 type VariableList []*Variable
 
 type HttpRequest struct {
+	// Name of the HTTP request. Used for debugging and metrics
+	Name string `json:"name"`
+
 	// A target service, to be used in metrics
 	TargetService string `json:"target_service"`
-
-	// How frequently to execute the HTTP request
-	Period string `json:"period"`
 
 	// The request timeout. Default is 5 seconds
 	Timeout string `json:"timeout,omitempty"`
@@ -87,7 +87,7 @@ type HttpRequest struct {
 	ExpectedResponseCodes []int `json:"expected_response_codes,omitempty"`
 
 	// Variables available from previous requests
-	availableVariables VariableList
+	availableVariables VariableList `json:"-"`
 }
 
 // HttpMonitorSpec defines the desired state of HttpMonitor
@@ -95,7 +95,10 @@ type HttpMonitorSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Requests []HttpRequest
+	Requests []HttpRequest `json:"requests"`
+
+	// How frequently to execute the monitor requests
+	Period string `json:"period"`
 }
 
 // HttpMonitorStatus defines the observed state of HttpMonitor
