@@ -1,3 +1,27 @@
+/*
+Copyright 2020 Raising the Floor - International
+
+Licensed under the New BSD license. You may not use this file except in
+compliance with this License.
+
+You may obtain a copy of the License at
+https://github.com/GPII/universal/blob/master/LICENSE.txt
+
+The R&D leading to these results received funding from the:
+* Rehabilitation Services Administration, US Dept. of Education under
+  grant H421A150006 (APCP)
+* National Institute on Disability, Independent Living, and
+  Rehabilitation Research (NIDILRR)
+* Administration for Independent Living & Dept. of Education under grants
+  H133E080022 (RERC-IT) and H133E130028/90RE5003-01-00 (UIITA-RERC)
+* European Union's Seventh Framework Programme (FP7/2007-2013) grant
+  agreement nos. 289016 (Cloud4all) and 610510 (Prosperity4All)
+* William and Flora Hewlett Foundation
+* Ontario Ministry of Research and Innovation
+* Canadian Foundation for Innovation
+* Adobe Foundation
+* Consumer Electronics Association Foundation
+*/
 package v1alpha1
 
 import (
@@ -14,18 +38,18 @@ func newReaderCloser(s string) io.ReadCloser {
 
 func TestVariable_ParseFromResponse(t *testing.T) {
 	tests := []struct {
-		TestName string
-		Var *Variable
-		Resp *http.Response
-		ExpectErr bool
+		TestName      string
+		Var           *Variable
+		Resp          *http.Response
+		ExpectErr     bool
 		ExpectedValue string
 	}{
 		// Header tests
 		{
 			"get-header-simple",
 			&Variable{
-				Name: "test",
-				From: FromTypeHeaders,
+				Name:     "test",
+				From:     FromTypeHeaders,
 				JsonPath: "/My-Header",
 			},
 			&http.Response{
@@ -39,8 +63,8 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"get-header-by-index",
 			&Variable{
-				Name: "test",
-				From: FromTypeHeaders,
+				Name:     "test",
+				From:     FromTypeHeaders,
 				JsonPath: "/My-Header/0",
 			},
 			&http.Response{
@@ -54,8 +78,8 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"get-header-by-index-1",
 			&Variable{
-				Name: "test",
-				From: FromTypeHeaders,
+				Name:     "test",
+				From:     FromTypeHeaders,
 				JsonPath: "/My-Header/1",
 			},
 			&http.Response{
@@ -69,8 +93,8 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"header-404",
 			&Variable{
-				Name: "test",
-				From: FromTypeHeaders,
+				Name:     "test",
+				From:     FromTypeHeaders,
 				JsonPath: "/Not-Real",
 			},
 			&http.Response{
@@ -85,8 +109,8 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"json-simple",
 			&Variable{
-				Name: "test",
-				From: FromTypeBodyJson,
+				Name:     "test",
+				From:     FromTypeBodyJson,
 				JsonPath: "/myVar",
 			},
 			&http.Response{
@@ -98,8 +122,8 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"json-array",
 			&Variable{
-				Name: "test",
-				From: FromTypeBodyJson,
+				Name:     "test",
+				From:     FromTypeBodyJson,
 				JsonPath: "/myVar/0",
 			},
 			&http.Response{
@@ -111,8 +135,8 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"json-array-1",
 			&Variable{
-				Name: "test",
-				From: FromTypeBodyJson,
+				Name:     "test",
+				From:     FromTypeBodyJson,
 				JsonPath: "/myVar/1",
 			},
 			&http.Response{
@@ -124,8 +148,8 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"json-int-but-is-string",
 			&Variable{
-				Name: "test",
-				From: FromTypeBodyJson,
+				Name:     "test",
+				From:     FromTypeBodyJson,
 				JsonPath: "/intval",
 			},
 			&http.Response{
@@ -137,8 +161,8 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"json-bool-but-is-string",
 			&Variable{
-				Name: "test",
-				From: FromTypeBodyJson,
+				Name:     "test",
+				From:     FromTypeBodyJson,
 				JsonPath: "/boolval",
 			},
 			&http.Response{
@@ -150,7 +174,7 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"json-404",
 			&Variable{
-				From: FromTypeBodyJson,
+				From:     FromTypeBodyJson,
 				JsonPath: "/notreal",
 			},
 			&http.Response{
@@ -162,7 +186,7 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"json-invalid-json",
 			&Variable{
-				From: FromTypeBodyJson,
+				From:     FromTypeBodyJson,
 				JsonPath: "/notreal",
 			},
 			&http.Response{
@@ -175,7 +199,7 @@ func TestVariable_ParseFromResponse(t *testing.T) {
 		{
 			"yaml-simple",
 			&Variable{
-				From: FromTypeBodyYaml,
+				From:     FromTypeBodyYaml,
 				JsonPath: "/myVal",
 			},
 			&http.Response{
@@ -190,8 +214,8 @@ myVal: "qwerty"
 		{
 			"yaml-array",
 			&Variable{
-				Name: "test",
-				From: FromTypeBodyYaml,
+				Name:     "test",
+				From:     FromTypeBodyYaml,
 				JsonPath: "/myVal/1",
 			},
 			&http.Response{
@@ -206,7 +230,7 @@ myVal: ["qwerty", "asdf"]
 		{
 			"yaml-404",
 			&Variable{
-				From: FromTypeBodyYaml,
+				From:     FromTypeBodyYaml,
 				JsonPath: "/notreal/1",
 			},
 			&http.Response{
@@ -221,7 +245,7 @@ myVal: ["qwerty", "asdf"]
 		{
 			"yaml-invalid-yaml",
 			&Variable{
-				From: FromTypeBodyYaml,
+				From:     FromTypeBodyYaml,
 				JsonPath: "/notreal/1",
 			},
 			&http.Response{
