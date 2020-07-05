@@ -1,0 +1,7 @@
+apiVersion: monitoring.raisingthefloor.org/v1alpha1
+kind: HttpMonitor
+metadata:
+  name: httpmonitor-sample
+spec:
+  # Add fields here
+  foo: bar

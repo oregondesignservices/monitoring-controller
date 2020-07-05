@@ -1,0 +1,24 @@
+# permissions for end users to edit httpmonitors.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: httpmonitor-editor-role
+rules:
+- apiGroups:
+  - monitoring.raisingthefloor.org
+  resources:
+  - httpmonitors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - monitoring.raisingthefloor.org
+  resources:
+  - httpmonitors/status
+  verbs:
+  - get

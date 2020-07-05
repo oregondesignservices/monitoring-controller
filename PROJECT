@@ -1,0 +1,7 @@
+domain: raisingthefloor.org
+repo: github.com/oregondesignservices/monitoring-controller
+resources:
+- group: monitoring.raisingthefloor.org
+  kind: HttpMonitor
+  version: v1alpha1
+version: "2"
