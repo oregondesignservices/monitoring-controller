@@ -18,7 +18,9 @@ package main
 
 import (
 	"flag"
+	"github.com/oregondesignservices/monitoring-controller/httpclient"
 	"os"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -46,11 +48,15 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var clientTimeout time.Duration
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
+	flag.DurationVar(&clientTimeout, "http-client-timeout", 29*time.Second, "the http client timeout duration")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", true,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
+
+	httpclient.Initialize(clientTimeout)
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 

@@ -36,6 +36,93 @@ spec:
         spec:
           description: HttpMonitorSpec defines the desired state of HttpMonitor
           properties:
+            cleanup:
+              description: Optional requests to be run after `requests`.
+              items:
+                properties:
+                  body:
+                    description: The request body
+                    type: string
+                  expected_response_codes:
+                    description: Expected response codes. By default, this will be
+                      anything seen as "ok"
+                    items:
+                      type: integer
+                    type: array
+                  headers:
+                    additionalProperties:
+                      items:
+                        type: string
+                      type: array
+                    description: Request headers
+                    type: object
+                  method:
+                    description: The HTTP method
+                    enum:
+                    - HEAD
+                    - GET
+                    - POST
+                    - PUT
+                    - PATCH
+                    - DELETE
+                    - OPTIONS
+                    type: string
+                  name:
+                    description: Name of the HTTP request. Used for debugging and
+                      metrics
+                    type: string
+                  query_params:
+                    additionalProperties:
+                      items:
+                        type: string
+                      type: array
+                    description: Any potential query parameters
+                    type: object
+                  target_service:
+                    description: A target service, to be used in metrics
+                    type: string
+                  timeout:
+                    description: The request timeout. Default is 5 seconds
+                    type: string
+                  url:
+                    description: HTTP(S) URL to make the request
+                    type: string
+                  vars_from_response:
+                    description: Extract variables for later requests to utilize
+                    items:
+                      properties:
+                        from:
+                          description: Where to extract the variable from
+                          enum:
+                          - body_yaml
+                          - body_json
+                          - body_raw
+                          - headers
+                          - provided
+                          type: string
+                        json_path:
+                          description: The JSON path to the data.
+                          type: string
+                        name:
+                          description: The variable name
+                          type: string
+                        value:
+                          description: The final value of the variable, after its
+                            been extracted
+                          type: string
+                      required:
+                      - from
+                      - name
+                      - value
+                      type: object
+                    type: array
+                required:
+                - method
+                - name
+                - target_service
+                - url
+                type: object
+              type: array
             period:
               description: How frequently to execute the monitor requests
               type: string
@@ -89,7 +176,7 @@ spec:
                   url:
                     description: HTTP(S) URL to make the request
                     type: string
-                  variables:
+                  vars_from_response:
                     description: Extract variables for later requests to utilize
                     items:
                       properties:
@@ -100,6 +187,7 @@ spec:
                           - body_json
                           - body_raw
                           - headers
+                          - provided
                           type: string
                         json_path:
                           description: The JSON path to the data.
@@ -107,9 +195,14 @@ spec:
                         name:
                           description: The variable name
                           type: string
+                        value:
+                          description: The final value of the variable, after its
+                            been extracted
+                          type: string
                       required:
                       - from
                       - name
+                      - value
                       type: object
                     type: array
                 required:
@@ -119,12 +212,29 @@ spec:
                 - url
                 type: object
               type: array
+            variables:
+              additionalProperties:
+                type: string
+              description: Variables available to all requests
+              type: object
           required:
+          - cleanup
           - period
           - requests
+          - variables
           type: object
         status:
           description: HttpMonitorStatus defines the observed state of HttpMonitor
+          properties:
+            last_execution:
+              format: date-time
+              type: string
+            last_failure:
+              format: date-time
+              type: string
+          required:
+          - last_execution
+          - last_failure
           type: object
       type: object
   version: v1alpha1

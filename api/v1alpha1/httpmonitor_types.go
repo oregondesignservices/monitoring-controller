@@ -29,9 +29,12 @@ The R&D leading to these results received funding from the:
 package v1alpha1
 
 import (
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/url"
+	"sync"
+	"time"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -42,8 +45,9 @@ type FromType string
 var (
 	FromTypeBodyYaml FromType = "body_yaml"
 	FromTypeBodyJson FromType = "body_json"
-	FromTypeBodyRaw  FromType = "body_raw"
-	FromTypeHeaders  FromType = "headers"
+	FromTypeBodyRaw  FromType = "body_raw" //
+	FromTypeHeaders  FromType = "headers"  // extract the variable from Headers
+	FromTypeProvided FromType = "provided" // provided by the user
 )
 
 type Variable struct {
@@ -51,14 +55,14 @@ type Variable struct {
 	Name string `json:"name"`
 
 	// Where to extract the variable from
-	// +kubebuilder:validation:Enum=body_yaml;body_json;body_raw;headers
+	// +kubebuilder:validation:Enum=body_yaml;body_json;body_raw;headers;provided
 	From FromType `json:"from"`
 
 	// The JSON path to the data.
 	JsonPath string `json:"json_path,omitempty"`
 
 	// The final value of the variable, after its been extracted
-	Value string `json:"-"`
+	Value string `json:"value"`
 }
 
 type VariableList []*Variable
@@ -90,12 +94,12 @@ type HttpRequest struct {
 	Headers http.Header `json:"headers,omitempty"`
 
 	// Extract variables for later requests to utilize
-	Variables VariableList `json:"variables,omitempty"`
+	VariablesFromResponse VariableList `json:"vars_from_response,omitempty"`
 
 	// Expected response codes. By default, this will be anything seen as "ok"
 	ExpectedResponseCodes []int `json:"expected_response_codes,omitempty"`
 
-	// Variables available from previous requests
+	// VariablesFromResponse available from previous requests
 	availableVariables VariableList `json:"-"`
 }
 
@@ -104,21 +108,29 @@ type HttpMonitorSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// Variables available to all requests
+	Variables map[string]string `json:"variables"`
+
 	Requests []HttpRequest `json:"requests"`
 
+	// Optional requests to be run after `requests`.
+	Cleanup []HttpRequest `json:"cleanup"`
+
 	// How frequently to execute the monitor requests
-	Period string `json:"period"`
+	Period *metav1.Duration `json:"period"`
 }
 
 // HttpMonitorStatus defines the observed state of HttpMonitor
 type HttpMonitorStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	LastExecution *metav1.Time `json:"last_execution"`
+	LastFailure   *metav1.Time `json:"last_failure"`
 }
 
-// +kubebuilder:object:root=true
-
 // HttpMonitor is the Schema for the httpmonitors API
+// +kubebuilder:object:root=true
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:spec
@@ -128,11 +140,14 @@ type HttpMonitor struct {
 
 	Spec   HttpMonitorSpec   `json:"spec,omitempty"`
 	Status HttpMonitorStatus `json:"status,omitempty"`
+
+	ticker  *time.Ticker    `json:"-"`
+	stopped *sync.WaitGroup `json:"-"`
+	logger  logr.Logger     `json:"-"`
 }
 
-// +kubebuilder:object:root=true
-
 // HttpMonitorList contains a list of HttpMonitor
+// +kubebuilder:object:root=true
 type HttpMonitorList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -254,6 +254,30 @@ myVal: ["qwerty", "asdf"]
 			true,
 			"",
 		},
+		// raw body
+		{
+			"raw-body",
+			&Variable{
+				From:     FromTypeBodyRaw,
+				JsonPath: "/this/doesnt/matter",
+			},
+			&http.Response{
+				Body: newReaderCloser(`whatever`),
+			},
+			false,
+			"whatever",
+		},
+		// provided by user
+		{
+			"raw-body",
+			&Variable{
+				From:  FromTypeProvided,
+				Value: "value",
+			},
+			nil,
+			false,
+			"value",
+		},
 	}
 
 	for _, testdata := range tests {

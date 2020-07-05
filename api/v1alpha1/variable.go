@@ -45,6 +45,14 @@ func (v VariableList) newReplacer() *strings.Replacer {
 	return strings.NewReplacer(args...)
 }
 
+func (v VariableList) clearValues() {
+	for _, elem := range v {
+		if elem.From != FromTypeProvided {
+			elem.Value = ""
+		}
+	}
+}
+
 // Read a Response.Body and reset it for later reading.
 // Required if we need to read a response body more than once.
 func readBodyAndReset(resp *http.Response) []byte {
@@ -56,6 +64,9 @@ func readBodyAndReset(resp *http.Response) []byte {
 
 func (v *Variable) ParseFromResponse(resp *http.Response) error {
 	switch v.From {
+	case FromTypeProvided:
+		// "provided" means the value is provided by the user
+		return nil
 	case FromTypeBodyJson:
 		return v.parseFromBodyJson(resp)
 	case FromTypeBodyYaml:

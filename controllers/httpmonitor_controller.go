@@ -27,9 +27,8 @@ package controllers
 
 import (
 	"context"
+	"github.com/oregondesignservices/monitoring-controller/httpmonitor"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/go-logr/logr"
@@ -53,47 +52,35 @@ type HttpMonitorReconciler struct {
 func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	instance := &monitoringraisingthefloororgv1alpha1.HttpMonitor{}
 	ctx := context.Background()
-	logger := r.Log.WithValues("httpmonitor", req.NamespacedName)
+	logger := r.Log.WithValues("httpmonitor", req.NamespacedName, "key", req.NamespacedName.String())
 
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Object not found, return.  Created objects are automatically garbage collected.
-			// For additional cleanup logic use finalizers.
+			// Object not found
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
-	// TODO(user): Change this to be the object type created by your controller
-	// Define the desired Deployment object
-	monitor := &monitoringraisingthefloororgv1alpha1.HttpMonitor{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-deployment",
-			Namespace: instance.Namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{"deployment": instance.Name + "-deployment"},
-			},
-			Replicas: &instance.Spec.Replicas,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{"deployment": instance.Name + "-deployment"}},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  instance.Name,
-							Image: instance.Spec.Image,
-						},
-					},
-				},
-			},
-		},
+	knownMonitor, exists := httpmonitor.KnownHttpMonitors[req.NamespacedName.String()]
+	if !exists {
+		logger.Info("detected a new http monitor")
+	} else {
+		// If the resource version is the same, we have nothing to do. We know about the exact object.
+		if instance.GetResourceVersion() == knownMonitor.GetResourceVersion() {
+			logger.V(3).Info("received a known http monitor with no changes")
+			return reconcile.Result{}, nil
+		} else {
+			logger.Info("detected http monitor changes")
+			knownMonitor.Stop()
+		}
 	}
-	if err := controllerutil.SetControllerReference(instance, deploy, r.scheme); err != nil {
-		return reconcile.Result{}, err
-	}
+
+	// At this point, we need to store the http monitor and restart its worker routine
+	httpmonitor.KnownHttpMonitors[req.NamespacedName.String()] = instance
+	instance.Start()
 
 	return ctrl.Result{}, nil
 }
