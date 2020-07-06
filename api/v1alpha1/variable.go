@@ -45,6 +45,7 @@ func (v VariableList) newReplacer() *strings.Replacer {
 	return strings.NewReplacer(args...)
 }
 
+// Clears all values that are not provided by users
 func (v VariableList) clearValues() {
 	for _, elem := range v {
 		if elem.From != FromTypeProvided {

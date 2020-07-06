@@ -79,7 +79,7 @@ func TestHttpRequest_BuildRequest(t *testing.T) {
 		Url:                "http://test.com/{v1}",
 		QueryParams:        queryParam,
 		Headers:            header,
-		availableVariables: availableVariables,
+		AvailableVariables: availableVariables,
 	}
 
 	req, err := r.BuildRequest()

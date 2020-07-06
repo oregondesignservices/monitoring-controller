@@ -27,7 +27,7 @@ package controllers
 
 import (
 	"context"
-	"github.com/oregondesignservices/monitoring-controller/httpmonitor"
+	monitorv1alpha1util "github.com/oregondesignservices/monitoring-controller/httpmonitor/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -64,23 +64,24 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		return reconcile.Result{}, err
 	}
 
-	knownMonitor, exists := httpmonitor.KnownHttpMonitors[req.NamespacedName.String()]
+	knownRunner, exists := monitorv1alpha1util.KnownRunners[req.NamespacedName.String()]
 	if !exists {
 		logger.Info("detected a new http monitor")
 	} else {
 		// If the resource version is the same, we have nothing to do. We know about the exact object.
-		if instance.GetResourceVersion() == knownMonitor.GetResourceVersion() {
+		if instance.GetResourceVersion() == knownRunner.Monitor.GetResourceVersion() {
 			logger.V(3).Info("received a known http monitor with no changes")
 			return reconcile.Result{}, nil
 		} else {
 			logger.Info("detected http monitor changes")
-			knownMonitor.Stop()
+			knownRunner.Stop()
 		}
 	}
 
 	// At this point, we need to store the http monitor and restart its worker routine
-	httpmonitor.KnownHttpMonitors[req.NamespacedName.String()] = instance
-	instance.Start()
+	newRunner := monitorv1alpha1util.NewHttpMonitorRunner(instance)
+	monitorv1alpha1util.KnownRunners[req.NamespacedName.String()] = newRunner
+	newRunner.Start()
 
 	return ctrl.Result{}, nil
 }

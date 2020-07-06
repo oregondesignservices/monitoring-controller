@@ -31,11 +31,12 @@ import (
 	"github.com/oregondesignservices/monitoring-controller/httpclient"
 	"net/http"
 	"net/url"
-	ctrl "sigs.k8s.io/controller-runtime"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"strings"
-	"sync"
 	"time"
 )
+
+var httpMonitorUtilsLogger = logf.Log.WithName("httpmonitor-utils")
 
 func replaceQueryParams(v map[string][]string, replacer *strings.Replacer) url.Values {
 	if len(v) == 0 {
@@ -69,7 +70,7 @@ func replaceHeader(v http.Header, replacer *strings.Replacer) http.Header {
 }
 
 func (r *HttpRequest) BuildRequest() (*http.Request, error) {
-	replacer := r.availableVariables.newReplacer()
+	replacer := r.AvailableVariables.newReplacer()
 
 	finalUrl := replacer.Replace(r.Url)
 	body := replacer.Replace(r.Body)
@@ -97,7 +98,7 @@ func containsInt(needle int, haystay []int) bool {
 }
 
 // Send the HTTP request and parse any variables
-func (r *HttpRequest) Do(client *http.Client) error {
+func (r *HttpRequest) sendRequest(client *http.Client) error {
 	req, err := r.BuildRequest()
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func (r *HttpRequest) handleResponse(resp *http.Response) error {
 	return nil
 }
 
-func (h *HttpMonitor) executeRequests() {
+func (h *HttpMonitor) Execute() {
 	client := httpclient.GetClient()
 
 	// These variables are available for all requests to use
@@ -159,14 +160,19 @@ func (h *HttpMonitor) executeRequests() {
 		})
 	}
 
+	logger := httpMonitorUtilsLogger.
+		WithName("httpmonitor").
+		WithName("runner").
+		WithValues("namespace", h.Namespace, "name", h.Name)
+
 	// run requests
 	for _, httpRequest := range h.Spec.Requests {
-		entry := h.logger.WithValues("name", httpRequest.Name)
+		entry := logger.WithValues("name", httpRequest.Name)
 		entry.V(2).Info("executing request")
 		httpRequest.VariablesFromResponse.clearValues()
-		httpRequest.availableVariables = availableVariables
+		httpRequest.AvailableVariables = availableVariables
 
-		err := httpRequest.Do(client)
+		err := httpRequest.sendRequest(client)
 		if err != nil {
 			entry.Error(err, "failed to complete request", "name", httpRequest.Name)
 			break
@@ -178,40 +184,14 @@ func (h *HttpMonitor) executeRequests() {
 
 	// run cleanup
 	for _, httpRequest := range h.Spec.Cleanup {
-		entry := h.logger.WithValues("name", httpRequest.Name)
+		entry := logger.WithValues("name", httpRequest.Name)
 		entry.V(2).Info("executing cleanup request")
 		httpRequest.VariablesFromResponse.clearValues()
-		httpRequest.availableVariables = availableVariables
+		httpRequest.AvailableVariables = availableVariables
 
-		err := httpRequest.Do(client)
+		err := httpRequest.sendRequest(client)
 		if err != nil {
 			entry.Error(err, "failed to complete cleanup request", "name", httpRequest.Name)
 		}
 	}
-}
-
-func (h *HttpMonitor) Start() {
-	if h.ticker != nil {
-		panic("tried to start an already started HttpMonitor")
-	}
-
-	h.logger = ctrl.Log.
-		WithName("httpmonitor").
-		WithName("runner").
-		WithValues("namespace", h.Namespace, "name", h.Name)
-
-	h.ticker = time.NewTicker(h.Spec.Period.Duration)
-	h.stopped = &sync.WaitGroup{}
-	h.stopped.Add(1)
-	go func() {
-		defer h.stopped.Done()
-		for _ = range h.ticker.C {
-			h.executeRequests()
-		}
-	}()
-}
-
-func (h *HttpMonitor) Stop() {
-	h.ticker.Stop()
-	h.stopped.Wait()
 }

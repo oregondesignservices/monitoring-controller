@@ -29,12 +29,9 @@ The R&D leading to these results received funding from the:
 package v1alpha1
 
 import (
-	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/url"
-	"sync"
-	"time"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -100,7 +97,7 @@ type HttpRequest struct {
 	ExpectedResponseCodes []int `json:"expected_response_codes,omitempty"`
 
 	// VariablesFromResponse available from previous requests
-	availableVariables VariableList `json:"-"`
+	AvailableVariables VariableList `json:"-"`
 }
 
 // HttpMonitorSpec defines the desired state of HttpMonitor
@@ -140,10 +137,6 @@ type HttpMonitor struct {
 
 	Spec   HttpMonitorSpec   `json:"spec,omitempty"`
 	Status HttpMonitorStatus `json:"status,omitempty"`
-
-	ticker  *time.Ticker    `json:"-"`
-	stopped *sync.WaitGroup `json:"-"`
-	logger  logr.Logger     `json:"-"`
 }
 
 // HttpMonitorList contains a list of HttpMonitor
