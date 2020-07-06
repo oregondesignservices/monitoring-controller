@@ -27,7 +27,7 @@ package controllers
 
 import (
 	"context"
-	monitorv1alpha1util "github.com/oregondesignservices/monitoring-controller/httpmonitor/v1alpha1"
+	runnverv1alpha1 "github.com/oregondesignservices/monitoring-controller/runner/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -57,19 +57,25 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Object not found
+			// Object not found. See if we need to stop a monitor
+			knownRunner, exists := runnverv1alpha1.KnownRunners[req.NamespacedName.String()]
+			if exists {
+				logger.Info("removing monitor")
+				knownRunner.Stop()
+				delete(runnverv1alpha1.KnownRunners, req.NamespacedName.String())
+			}
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
-	knownRunner, exists := monitorv1alpha1util.KnownRunners[req.NamespacedName.String()]
+	knownRunner, exists := runnverv1alpha1.KnownRunners[req.NamespacedName.String()]
 	if !exists {
 		logger.Info("detected a new http monitor")
 	} else {
 		// If the resource version is the same, we have nothing to do. We know about the exact object.
-		if instance.GetResourceVersion() == knownRunner.Monitor.GetResourceVersion() {
+		if instance.GetResourceVersion() == knownRunner.GetResourceVersion() {
 			logger.V(3).Info("received a known http monitor with no changes")
 			return reconcile.Result{}, nil
 		} else {
@@ -79,8 +85,8 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	}
 
 	// At this point, we need to store the http monitor and restart its worker routine
-	newRunner := monitorv1alpha1util.NewHttpMonitorRunner(instance)
-	monitorv1alpha1util.KnownRunners[req.NamespacedName.String()] = newRunner
+	newRunner := runnverv1alpha1.NewHttpMonitorRunner(instance)
+	runnverv1alpha1.KnownRunners[req.NamespacedName.String()] = newRunner
 	newRunner.Start()
 
 	return ctrl.Result{}, nil

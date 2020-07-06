@@ -98,15 +98,15 @@ func containsInt(needle int, haystay []int) bool {
 }
 
 // Send the HTTP request and parse any variables
-func (r *HttpRequest) sendRequest(client *http.Client) error {
+func (r *HttpRequest) sendRequest(client *http.Client) (*http.Response, error) {
 	req, err := r.BuildRequest()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	timeoutDuration, err := time.ParseDuration(r.Timeout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
@@ -114,9 +114,9 @@ func (r *HttpRequest) sendRequest(client *http.Client) error {
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return r.handleResponse(resp)
+	return resp, r.handleResponse(resp)
 }
 
 func (r *HttpRequest) handleResponse(resp *http.Response) error {
@@ -172,7 +172,8 @@ func (h *HttpMonitor) Execute() {
 		httpRequest.VariablesFromResponse.clearValues()
 		httpRequest.AvailableVariables = availableVariables
 
-		err := httpRequest.sendRequest(client)
+		resp, err := httpRequest.sendRequest(client)
+		AddMonitorRequestByStatus(h, httpRequest, resp)
 		if err != nil {
 			entry.Error(err, "failed to complete request", "name", httpRequest.Name)
 			break
@@ -189,7 +190,8 @@ func (h *HttpMonitor) Execute() {
 		httpRequest.VariablesFromResponse.clearValues()
 		httpRequest.AvailableVariables = availableVariables
 
-		err := httpRequest.sendRequest(client)
+		resp, err := httpRequest.sendRequest(client)
+		AddMonitorRequestByStatus(h, httpRequest, resp)
 		if err != nil {
 			entry.Error(err, "failed to complete cleanup request", "name", httpRequest.Name)
 		}

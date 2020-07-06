@@ -7,15 +7,13 @@ import (
 )
 
 type HttpMonitorRunner struct {
-	Monitor *monitoringraisingthefloororgv1alpha1.HttpMonitor
+	*monitoringraisingthefloororgv1alpha1.HttpMonitor
 	ticker  *time.Ticker
 	stopped *sync.WaitGroup
 }
 
 func NewHttpMonitorRunner(m *monitoringraisingthefloororgv1alpha1.HttpMonitor) *HttpMonitorRunner {
-	return &HttpMonitorRunner{
-		Monitor: m,
-	}
+	return &HttpMonitorRunner{HttpMonitor: m}
 }
 
 func (h *HttpMonitorRunner) Start() {
@@ -23,13 +21,13 @@ func (h *HttpMonitorRunner) Start() {
 		panic("tried to start an already started HttpMonitor")
 	}
 
-	h.ticker = time.NewTicker(h.Monitor.Spec.Period.Duration)
+	h.ticker = time.NewTicker(h.Spec.Period.Duration)
 	h.stopped = &sync.WaitGroup{}
 	h.stopped.Add(1)
 	go func() {
 		defer h.stopped.Done()
 		for _ = range h.ticker.C {
-			h.Monitor.Execute()
+			h.Execute()
 		}
 	}()
 }
