@@ -49,7 +49,9 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var clientTimeout time.Duration
+	var namespace string
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&namespace, "namespace", "monitoring", "which namespace the controller is running within")
 	flag.DurationVar(&clientTimeout, "http-client-timeout", 29*time.Second, "the http client timeout duration")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", true,
 		"Enable leader election for controller manager. "+
@@ -58,14 +60,15 @@ func main() {
 
 	httpclient.Initialize(clientTimeout)
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
-		Port:               9443,
-		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "2a9e9bce.raisingthefloor.org",
+		Scheme:                  scheme,
+		MetricsBindAddress:      metricsAddr,
+		Port:                    9443,
+		LeaderElection:          enableLeaderElection,
+		LeaderElectionID:        "monitoring-controller.raisingthefloor.org",
+		LeaderElectionNamespace: namespace,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

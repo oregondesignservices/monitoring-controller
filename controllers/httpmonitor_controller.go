@@ -54,15 +54,17 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	ctx := context.Background()
 	logger := r.Log.WithValues("httpmonitor", req.NamespacedName, "key", req.NamespacedName.String())
 
+	runnerKey := req.NamespacedName.String()
+	knownRunner, runnerExists := runnverv1alpha1.KnownRunners[runnerKey]
+
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found. See if we need to stop a monitor
-			knownRunner, exists := runnverv1alpha1.KnownRunners[req.NamespacedName.String()]
-			if exists {
+			if runnerExists {
 				logger.Info("removing monitor")
 				knownRunner.Stop()
-				delete(runnverv1alpha1.KnownRunners, req.NamespacedName.String())
+				delete(runnverv1alpha1.KnownRunners, runnerKey)
 			}
 			return reconcile.Result{}, nil
 		}
@@ -70,8 +72,7 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		return reconcile.Result{}, err
 	}
 
-	knownRunner, exists := runnverv1alpha1.KnownRunners[req.NamespacedName.String()]
-	if !exists {
+	if !runnerExists {
 		logger.Info("detected a new http monitor")
 	} else {
 		// If the resource version is the same, we have nothing to do. We know about the exact object.
@@ -86,7 +87,7 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 	// At this point, we need to store the http monitor and restart its worker routine
 	newRunner := runnverv1alpha1.NewHttpMonitorRunner(instance)
-	runnverv1alpha1.KnownRunners[req.NamespacedName.String()] = newRunner
+	runnverv1alpha1.KnownRunners[runnerKey] = newRunner
 	newRunner.Start()
 
 	return ctrl.Result{}, nil
