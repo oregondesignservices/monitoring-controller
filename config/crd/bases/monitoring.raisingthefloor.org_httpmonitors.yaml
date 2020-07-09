@@ -123,6 +123,11 @@ spec:
                 - url
                 type: object
               type: array
+            globals:
+              additionalProperties:
+                type: string
+              description: Variables available to all requests from the start
+              type: object
             period:
               description: How frequently to execute the monitor requests
               type: string
@@ -212,16 +217,11 @@ spec:
                 - url
                 type: object
               type: array
-            variables:
-              additionalProperties:
-                type: string
-              description: Variables available to all requests
-              type: object
           required:
           - cleanup
+          - globals
           - period
           - requests
-          - variables
           type: object
         status:
           description: HttpMonitorStatus defines the observed state of HttpMonitor

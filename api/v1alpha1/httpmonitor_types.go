@@ -105,8 +105,8 @@ type HttpMonitorSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Variables available to all requests
-	Variables map[string]string `json:"variables"`
+	// Variables available to all requests from the start
+	Globals map[string]string `json:"globals"`
 
 	Requests []HttpRequest `json:"requests"`
 
@@ -130,7 +130,6 @@ type HttpMonitorStatus struct {
 // +kubebuilder:object:root=true
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
-// +kubebuilder:subresource:spec
 type HttpMonitor struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -152,7 +152,7 @@ func (h *HttpMonitor) Execute() {
 			Value: "12345678", // @TODO make random
 		},
 	}
-	for key, val := range h.Spec.Variables {
+	for key, val := range h.Spec.Globals {
 		availableVariables = append(availableVariables, &Variable{
 			Name:  key,
 			From:  FromTypeProvided,
@@ -173,7 +173,7 @@ func (h *HttpMonitor) Execute() {
 		httpRequest.AvailableVariables = availableVariables
 
 		resp, err := httpRequest.sendRequest(client)
-		AddMonitorRequestByStatus(h, httpRequest, resp)
+		HandleMetrics(h, httpRequest, resp)
 		if err != nil {
 			entry.Error(err, "failed to complete request", "name", httpRequest.Name)
 			break
@@ -191,7 +191,7 @@ func (h *HttpMonitor) Execute() {
 		httpRequest.AvailableVariables = availableVariables
 
 		resp, err := httpRequest.sendRequest(client)
-		AddMonitorRequestByStatus(h, httpRequest, resp)
+		HandleMetrics(h, httpRequest, resp)
 		if err != nil {
 			entry.Error(err, "failed to complete cleanup request", "name", httpRequest.Name)
 		}

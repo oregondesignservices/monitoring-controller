@@ -27,7 +27,7 @@ package controllers
 
 import (
 	"context"
-	runnverv1alpha1 "github.com/oregondesignservices/monitoring-controller/runner/v1alpha1"
+	runnverv1alpha1 "github.com/oregondesignservices/monitoring-controller/internal/runner/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
