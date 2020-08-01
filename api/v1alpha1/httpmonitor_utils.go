@@ -28,7 +28,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/oregondesignservices/monitoring-controller/httpclient"
+	"github.com/oregondesignservices/monitoring-controller/internal/httpclient"
 	"net/http"
 	"net/url"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"

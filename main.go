@@ -18,7 +18,7 @@ package main
 
 import (
 	"flag"
-	"github.com/oregondesignservices/monitoring-controller/httpclient"
+	"github.com/oregondesignservices/monitoring-controller/internal/httpclient"
 	"os"
 	"time"
 
