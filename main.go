@@ -53,7 +53,7 @@ func main() {
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&namespace, "namespace", "monitoring", "which namespace the controller is running within")
 	flag.DurationVar(&clientTimeout, "http-client-timeout", 29*time.Second, "the http client timeout duration")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", true,
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()

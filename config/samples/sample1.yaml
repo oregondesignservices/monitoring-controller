@@ -10,3 +10,8 @@ spec:
       method: GET
       url: "https://app.morphic.org/download"
       expected_response_codes: [200]
+    - name: check external access2
+      target_service: morphicweb
+      method: GET
+      url: "https://app.morphic.org/download"
+      expected_response_codes: [200]

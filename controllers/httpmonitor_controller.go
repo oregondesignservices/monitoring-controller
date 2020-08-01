@@ -27,14 +27,17 @@ package controllers
 
 import (
 	"context"
-	runnverv1alpha1 "github.com/oregondesignservices/monitoring-controller/internal/runner/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
 	"github.com/go-logr/logr"
+	"github.com/oregondesignservices/monitoring-controller/internal/metrics"
+	runnverv1alpha1 "github.com/oregondesignservices/monitoring-controller/internal/runner/v1alpha1"
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"strconv"
 
 	monitoringraisingthefloororgv1alpha1 "github.com/oregondesignservices/monitoring-controller/api/v1alpha1"
 )
@@ -54,14 +57,13 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	ctx := context.Background()
 	logger := r.Log.WithValues("httpmonitor", req.NamespacedName, "key", req.NamespacedName.String())
 
-	logger.Info("reconciling")
-
 	runnerKey := req.NamespacedName.String()
 	knownRunner, runnerExists := runnverv1alpha1.KnownRunners[runnerKey]
 
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			removeKnownHttpCrdGauge(logger, req.Namespace, req.Name)
 			// Object not found. See if we need to stop a monitor
 			if runnerExists {
 				logger.Info("removing monitor")
@@ -84,8 +86,11 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		} else {
 			logger.Info("detected http monitor changes")
 			knownRunner.Stop()
+			removeKnownHttpCrdGauge(logger, req.Namespace, req.Name)
 		}
 	}
+
+	recordKnownHttpCrdGauge(instance)
 
 	// At this point, we need to store the http monitor and restart its worker routine
 	newRunner := runnverv1alpha1.NewHttpMonitorRunner(instance)
@@ -93,6 +98,54 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	newRunner.Start()
 
 	return ctrl.Result{}, nil
+}
+
+func labelPairsToLabels(pairs []*dto.LabelPair) prometheus.Labels {
+	m := prometheus.Labels{}
+
+	for _, pair := range pairs {
+		m[*pair.Name] = *pair.Value
+	}
+
+	return m
+}
+
+// We need to remove the existing gauge so we can update its details
+func removeKnownHttpCrdGauge(logger logr.Logger, namespace, name string) {
+	ch := make(chan prometheus.Metric)
+	go func() {
+		metrics.KnownHttpCrdGauge.Collect(ch)
+		close(ch)
+	}()
+
+	var toDelete []prometheus.Labels
+	for m := range ch {
+		pb := &dto.Metric{}
+		err := m.Write(pb)
+		if err != nil {
+			ctrl.Log.Error(err, "failed to decode metric")
+		}
+		labels := labelPairsToLabels(pb.GetLabel())
+		if labels["namespace"] == namespace && labels["name"] == name {
+			toDelete = append(toDelete, labels)
+		}
+	}
+
+	for _, labelsToDelete := range toDelete {
+		logger.Info("deleting existing metric in KnownHttpCrdGauge", "labels", labelsToDelete)
+		metrics.KnownHttpCrdGauge.Delete(labelsToDelete)
+	}
+}
+
+func recordKnownHttpCrdGauge(crd *monitoringraisingthefloororgv1alpha1.HttpMonitor) {
+	metrics.KnownHttpCrdGauge.With(prometheus.Labels{
+		"namespace":            crd.Namespace,
+		"name":                 crd.Name,
+		"num_requests":         strconv.Itoa(len(crd.Spec.Requests)),
+		"num_cleanup_requests": strconv.Itoa(len(crd.Spec.Cleanup)),
+		"period":               crd.Spec.Period.Duration.String(),
+		"num_globals":          strconv.Itoa(len(crd.Spec.Globals)),
+	}).Set(1)
 }
 
 func (r *HttpMonitorReconciler) SetupWithManager(mgr ctrl.Manager) error {

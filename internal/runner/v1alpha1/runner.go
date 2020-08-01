@@ -2,14 +2,13 @@ package v1alpha1
 
 import (
 	monitoringraisingthefloororgv1alpha1 "github.com/oregondesignservices/monitoring-controller/api/v1alpha1"
-	"sync"
 	"time"
 )
 
 type HttpMonitorRunner struct {
 	*monitoringraisingthefloororgv1alpha1.HttpMonitor
-	ticker  *time.Ticker
-	stopped *sync.WaitGroup
+	ticker *time.Ticker
+	closer chan bool
 }
 
 func NewHttpMonitorRunner(m *monitoringraisingthefloororgv1alpha1.HttpMonitor) *HttpMonitorRunner {
@@ -22,17 +21,21 @@ func (h *HttpMonitorRunner) Start() {
 	}
 
 	h.ticker = time.NewTicker(h.Spec.Period.Duration)
-	h.stopped = &sync.WaitGroup{}
-	h.stopped.Add(1)
+	h.closer = make(chan bool)
 	go func() {
-		defer h.stopped.Done()
-		for _ = range h.ticker.C {
-			h.Execute()
+		for {
+			select {
+			case <-h.ticker.C:
+				h.Execute()
+			case <-h.closer:
+				return
+			}
 		}
 	}()
 }
 
 func (h *HttpMonitorRunner) Stop() {
+	// Stop does not close the channel, so the closer channel handles that.
+	h.closer <- true
 	h.ticker.Stop()
-	h.stopped.Wait()
 }
