@@ -69,6 +69,9 @@ func main() {
 		LeaderElection:          enableLeaderElection,
 		LeaderElectionID:        "monitoring-controller.raisingthefloor.org",
 		LeaderElectionNamespace: namespace,
+		//HealthProbeBindAddress:  ":8081",
+		//ReadinessEndpointName:   "/ready",
+		//LivenessEndpointName:    "/alive",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
