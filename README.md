@@ -24,4 +24,4 @@ sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch}/bin/kubebuilder /usr/local/
 
 ## Samples
 
-- [HttpMonitoring](config/samples/monitoring.raisingthefloor.org_v1alpha1_httpmonitor.yaml)
+- [HttpMonitoring](config/samples/sample2.yaml)

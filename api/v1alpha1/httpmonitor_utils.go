@@ -104,9 +104,13 @@ func (r *HttpRequest) sendRequest(client *http.Client) (*http.Response, error) {
 		return nil, err
 	}
 
-	timeoutDuration, err := time.ParseDuration(r.Timeout)
-	if err != nil {
-		return nil, err
+	timeoutDuration := 5 * time.Second
+
+	if r.Timeout != "" {
+		timeoutDuration, err = time.ParseDuration(r.Timeout)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
@@ -164,6 +168,8 @@ func (h *HttpMonitor) Execute() {
 		WithName("httpmonitor").
 		WithName("runner").
 		WithValues("namespace", h.Namespace, "name", h.Name)
+
+	logger.Info("executing requests")
 
 	// run requests
 	for _, httpRequest := range h.Spec.Requests {

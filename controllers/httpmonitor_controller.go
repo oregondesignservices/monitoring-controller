@@ -54,6 +54,8 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	ctx := context.Background()
 	logger := r.Log.WithValues("httpmonitor", req.NamespacedName, "key", req.NamespacedName.String())
 
+	logger.Info("reconciling")
+
 	runnerKey := req.NamespacedName.String()
 	knownRunner, runnerExists := runnverv1alpha1.KnownRunners[runnerKey]
 

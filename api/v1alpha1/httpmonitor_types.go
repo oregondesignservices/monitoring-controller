@@ -106,12 +106,12 @@ type HttpMonitorSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Variables available to all requests from the start
-	Globals map[string]string `json:"globals"`
+	Globals map[string]string `json:"globals,omitempty"`
 
 	Requests []HttpRequest `json:"requests"`
 
 	// Optional requests to be run after `requests`.
-	Cleanup []HttpRequest `json:"cleanup"`
+	Cleanup []HttpRequest `json:"cleanup,omitempty"`
 
 	// How frequently to execute the monitor requests
 	Period *metav1.Duration `json:"period"`

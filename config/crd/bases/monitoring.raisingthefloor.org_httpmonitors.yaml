@@ -218,8 +218,6 @@ spec:
                 type: object
               type: array
           required:
-          - cleanup
-          - globals
           - period
           - requests
           type: object

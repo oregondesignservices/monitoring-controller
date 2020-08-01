@@ -1,0 +1,14 @@
+
+apiVersion: monitoring.raisingthefloor.org/v1alpha1
+kind: HttpMonitor
+metadata:
+  name: check-downloads-page-internal
+spec:
+  period: 1m
+  requests:
+    - name: check internal url
+      target_service: morphicweb
+      method: GET
+      url: "http://v0-morphic-web.morphicweb.svc.cluster.local/download"
+      expected_response_codes: [200]
+
