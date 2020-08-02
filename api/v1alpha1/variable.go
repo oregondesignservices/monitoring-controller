@@ -36,12 +36,20 @@ import (
 	"strings"
 )
 
-func (v VariableList) newReplacer() *strings.Replacer {
-	args := make([]string, 2*len(v))
-	for i := range v {
-		args[0] = "{" + v[i].Name + "}"
-		args[1] = v[i].Value
+// split for easier unittesting
+func (v VariableList) newReplacerArgs() []string {
+	replacerArgs := make([]string, 2*len(v))
+	i := 0
+	for _, variable := range v {
+		replacerArgs[i] = "{" + variable.Name + "}"
+		replacerArgs[i+1] = variable.Value
+		i = i + 2
 	}
+	return replacerArgs
+}
+
+func (v VariableList) newReplacer() *strings.Replacer {
+	args := v.newReplacerArgs()
 	return strings.NewReplacer(args...)
 }
 

@@ -28,6 +28,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -293,6 +294,82 @@ myVal: ["qwerty", "asdf"]
 
 		if testdata.Var.Value != testdata.ExpectedValue {
 			t.Errorf("[%s] value unexpected. Got: %s, expected: %s", testdata.TestName, testdata.Var.Value, testdata.ExpectedValue)
+		}
+	}
+}
+
+func TestVariable_newReplacerArgs(t *testing.T) {
+	tests := []struct {
+		TestName string
+		Vlist    VariableList
+		Expected []string
+	}{
+		{
+			"one var",
+			VariableList{
+				&Variable{
+					Name:  "some-name",
+					Value: "final value",
+				},
+			},
+			[]string{
+				"{some-name}",
+				"final value",
+			},
+		},
+		{
+			"two vars",
+			VariableList{
+				&Variable{
+					Name:  "some-name",
+					Value: "final value",
+				},
+				&Variable{
+					Name:  "another name",
+					Value: "final value2",
+				},
+			},
+			[]string{
+				"{some-name}",
+				"final value",
+				"{another name}",
+				"final value2",
+			},
+		},
+		{
+			"three vars",
+			VariableList{
+				&Variable{
+					Name:  "some-name",
+					Value: "final value",
+				},
+				&Variable{
+					Name:  "another name",
+					Value: "final value2",
+				},
+				&Variable{
+					Name:  "third-var",
+					Value: "third val",
+				},
+			},
+			[]string{
+				"{some-name}",
+				"final value",
+				"{another name}",
+				"final value2",
+				"{third-var}",
+				"third val",
+			},
+		},
+	}
+
+	for _, testdata := range tests {
+		output := testdata.Vlist.newReplacerArgs()
+		if !reflect.DeepEqual(output, testdata.Expected) {
+			t.Errorf("[%s] unexpected output. Got: %v, expected: %v", testdata.TestName, output, testdata.Expected)
+			if len(output) != len(testdata.Expected) {
+				t.Errorf("[%s] unexpected length: Got: %d, expected: %d", testdata.TestName, len(output), len(testdata.Expected))
+			}
 		}
 	}
 }

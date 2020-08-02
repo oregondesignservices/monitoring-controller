@@ -3,15 +3,10 @@ kind: HttpMonitor
 metadata:
   name: check-downloads-page-external
 spec:
-  period: 1m
+  period: 30s
   requests:
     - name: check external access
       target_service: morphicweb
       method: GET
-      url: "https://app.morphic.org/download"
-      expected_response_codes: [200]
-    - name: check external access2
-      target_service: morphicweb
-      method: GET
-      url: "https://app.morphic.org/download"
+      url: '{API_URL}/download'
       expected_response_codes: [200]
