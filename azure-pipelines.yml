@@ -16,11 +16,11 @@ trigger:
 variables:
   imageName: 'monitoring-controller'
   ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-    newDeployTag: latest-$(Build.BuildNumber)
+    newDeployTag: $(Build.BuildNumber)
     deployRepoRef: master
     imageTags: |
       latest
-      latest-$(Build.BuildNumber)
+      $(Build.BuildNumber)
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags') }}:
     imageTags: |
       $(Build.SourceBranchName)
