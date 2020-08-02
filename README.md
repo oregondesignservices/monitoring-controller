@@ -17,6 +17,10 @@ See [samples](config/samples).
 
 See [metrics.go](internal/metrics/metrics.go).
 
+## Grafana Dashboard
+
+The grafana dashboard may be found in the kustomize-based [deployment repo](https://github.com/oregondesignservices/deploy-monitoring-controller/blob/master/resources/grafana/main-dashboard.json).
+
 ## Development
 
 Uses kubebuilder: https://book-v1.book.kubebuilder.io/
