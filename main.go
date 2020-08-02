@@ -17,19 +17,15 @@ limitations under the License.
 package main
 
 import (
-	"flag"
-	"github.com/oregondesignservices/monitoring-controller/internal/httpclient"
-	"os"
-	"time"
-
+	monitoringraisingthefloororgv1alpha1 "github.com/oregondesignservices/monitoring-controller/api/v1alpha1"
+	"github.com/oregondesignservices/monitoring-controller/controllers"
+	"github.com/oregondesignservices/monitoring-controller/internal/conf"
+	"github.com/urfave/cli/v2"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	monitoringraisingthefloororgv1alpha1 "github.com/oregondesignservices/monitoring-controller/api/v1alpha1"
-	"github.com/oregondesignservices/monitoring-controller/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -46,29 +42,32 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var clientTimeout time.Duration
-	var namespace string
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&namespace, "namespace", "monitoring", "which namespace the controller is running within")
-	flag.DurationVar(&clientTimeout, "http-client-timeout", 29*time.Second, "the http client timeout duration")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.Parse()
+	app := &cli.App{
+		Name:   "monitoring-controller",
+		Usage:  "periodically make requests to monitor service health",
+		Action: run,
+		Flags:  conf.Flags,
+	}
 
-	httpclient.Initialize(clientTimeout)
+	err := app.Run(os.Args)
+	if err != nil {
+		panic(err)
+	}
+}
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
+func run(c *cli.Context) error {
+	err := conf.GlobalConfig.UpdateFromCli(c)
+	if err != nil {
+		return err
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                  scheme,
-		MetricsBindAddress:      metricsAddr,
+		MetricsBindAddress:      conf.GlobalConfig.MetricsAddr,
 		Port:                    9443,
-		LeaderElection:          enableLeaderElection,
+		LeaderElection:          conf.GlobalConfig.EnableLeaderElection,
 		LeaderElectionID:        "monitoring-controller.raisingthefloor.org",
-		LeaderElectionNamespace: namespace,
+		LeaderElectionNamespace: conf.GlobalConfig.Namespace,
 		//HealthProbeBindAddress:  ":8081",
 		//ReadinessEndpointName:   "/ready",
 		//LivenessEndpointName:    "/alive",
@@ -93,4 +92,5 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+	return nil
 }

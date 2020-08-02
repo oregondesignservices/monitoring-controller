@@ -28,6 +28,7 @@ package controllers
 import (
 	"context"
 	"github.com/go-logr/logr"
+	"github.com/oregondesignservices/monitoring-controller/internal/conf"
 	"github.com/oregondesignservices/monitoring-controller/internal/metrics"
 	runnverv1alpha1 "github.com/oregondesignservices/monitoring-controller/internal/runner/v1alpha1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -74,6 +75,10 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
+	}
+
+	for k, v := range conf.GlobalConfig.GlobalRequestVars {
+		instance.Spec.Globals[k] = v
 	}
 
 	if !runnerExists {
