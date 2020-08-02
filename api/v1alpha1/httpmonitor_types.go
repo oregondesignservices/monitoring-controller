@@ -106,7 +106,7 @@ type HttpMonitorSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Variables available to all requests from the start
-	Globals map[string]string `json:"globals,omitempty"`
+	Environment map[string]string `json:"environment,omitempty"`
 
 	Requests []HttpRequest `json:"requests"`
 

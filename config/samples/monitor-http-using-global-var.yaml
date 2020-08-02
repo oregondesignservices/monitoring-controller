@@ -8,5 +8,6 @@ spec:
     - name: check external access
       target_service: morphicweb
       method: GET
+      # This assumes the controller is launched with `--set-var API_URL=https://example.com`
       url: '{API_URL}/download'
       expected_response_codes: [200]

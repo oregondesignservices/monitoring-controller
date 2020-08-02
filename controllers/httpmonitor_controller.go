@@ -77,15 +77,15 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		return reconcile.Result{}, err
 	}
 
-	if instance.Spec.Globals == nil {
-		instance.Spec.Globals = make(map[string]string)
+	if instance.Spec.Environment == nil {
+		instance.Spec.Environment = make(map[string]string)
 	}
 
 	for k, v := range conf.GlobalConfig.GlobalRequestVars {
-		if _, exists := instance.Spec.Globals[k]; exists {
+		if _, exists := instance.Spec.Environment[k]; exists {
 			logger.Info("warning: HttpMonitor.spec.globals redefines existing --set-var", "key", k)
 		} else {
-			instance.Spec.Globals[k] = v
+			instance.Spec.Environment[k] = v
 		}
 	}
 
@@ -157,7 +157,7 @@ func recordKnownHttpCrdGauge(crd *monitoringraisingthefloororgv1alpha1.HttpMonit
 		"num_requests":         strconv.Itoa(len(crd.Spec.Requests)),
 		"num_cleanup_requests": strconv.Itoa(len(crd.Spec.Cleanup)),
 		"period":               crd.Spec.Period.Duration.String(),
-		"num_globals":          strconv.Itoa(len(crd.Spec.Globals)),
+		"num_globals":          strconv.Itoa(len(crd.Spec.Environment)),
 	}).Set(1)
 }
 

@@ -29,6 +29,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/oregondesignservices/monitoring-controller/internal/httpclient"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"net/http"
 	"net/url"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -153,10 +154,15 @@ func (h *HttpMonitor) Execute() {
 		&Variable{
 			Name:  "random-8",
 			From:  FromTypeProvided,
-			Value: "12345678", // @TODO make random
+			Value: rand.String(8),
+		},
+		&Variable{
+			Name:  "random-16",
+			From:  FromTypeProvided,
+			Value: rand.String(16),
 		},
 	}
-	for key, val := range h.Spec.Globals {
+	for key, val := range h.Spec.Environment {
 		availableVariables = append(availableVariables, &Variable{
 			Name:  key,
 			From:  FromTypeProvided,

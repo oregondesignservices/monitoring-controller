@@ -1,0 +1,42 @@
+apiVersion: monitoring.raisingthefloor.org/v1alpha1
+kind: HttpMonitor
+metadata:
+  name: check-user-create
+spec:
+  period: 1m
+
+  # variables available to all requests. Does not support variable replacement (like {random-16})
+  environment:
+    USERNAME: "test-username"
+    EMAIL: "example@example.com"
+
+  requests:
+    - name: create user
+      # Used as a label in metrics, to help with designing dashboards.
+      target_service: login-service
+      method: POST
+      url: "https://example.com/register/username"
+      # {random-16} is automatically set at the start of each monitoring period.
+      body: |
+        {
+          "username": "{USERNAME}",
+          "password": "{random-16}",
+          "email": "{EMAIL}"
+        }
+      headers:
+        Content-Type: ["application/json"]
+      # Parse the following variable from the response body json
+      vars_from_response:
+        - name: userid
+          from: body_json
+          jsonpath: /user/id
+      expected_response_codes: [200]
+
+  # These requests are executed in order. All requests in the list are executed, regardless
+  # of failure.
+  cleanup:
+    - name: delete user
+      target_service: login-service
+      url: "https://example.com/user/{userid}"
+      method: DELETE
+      expected_response_codes: [204]

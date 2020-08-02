@@ -123,7 +123,7 @@ spec:
                 - url
                 type: object
               type: array
-            globals:
+            environment:
               additionalProperties:
                 type: string
               description: Variables available to all requests from the start
