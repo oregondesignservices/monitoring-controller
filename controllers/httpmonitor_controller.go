@@ -82,7 +82,7 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	}
 
 	for k, v := range conf.GlobalConfig.GlobalRequestVars {
-		if _, exists := instance.Spec.Globals[k]; !exists {
+		if _, exists := instance.Spec.Globals[k]; exists {
 			logger.Info("warning: HttpMonitor.spec.globals redefines existing --set-var", "key", k)
 		} else {
 			instance.Spec.Globals[k] = v
