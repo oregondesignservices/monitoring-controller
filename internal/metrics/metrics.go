@@ -20,11 +20,17 @@ var (
 		Name: "monitor_http_crd_details",
 		Help: "details for HttpMonitor CRDs",
 	}, []string{"namespace", "name", "num_requests", "num_cleanup_requests", "period", "num_globals"})
+
+	GlobalVarsDetails = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "monitor_global_var_details",
+		Help: "information about globally accessible variables",
+	}, []string{"key", "value"})
 )
 
 func init() {
 	metrics.Registry.MustRegister(
 		HttpResponseCounter,
 		CrdHttpResponseCounter,
-		KnownHttpCrdGauge)
+		KnownHttpCrdGauge,
+		GlobalVarsDetails)
 }

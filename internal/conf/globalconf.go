@@ -3,6 +3,7 @@ package conf
 import (
 	"errors"
 	"github.com/oregondesignservices/monitoring-controller/internal/httpclient"
+	"github.com/oregondesignservices/monitoring-controller/internal/metrics"
 	"github.com/urfave/cli/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -70,6 +71,7 @@ func (c *configuration) UpdateFromCli(ctx *cli.Context) error {
 		}
 		c.GlobalRequestVars[pieces[0]] = pieces[1]
 		logger.Info("added global request variable", "key", pieces[0], "value", pieces[1])
+		metrics.GlobalVarsDetails.WithLabelValues(pieces...).Inc()
 	}
 	return nil
 }
