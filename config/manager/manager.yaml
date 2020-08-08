@@ -25,9 +25,8 @@ spec:
       containers:
       - command:
         - /manager
-        args:
-        - --enable-leader-election
-        image: controller:latest
+        args: []
+        image: localhost:5000/monitoring-controller
         name: manager
         resources:
           limits:
