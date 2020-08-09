@@ -22,3 +22,5 @@ bin
 *.swp
 *.swo
 *~
+kind-kubeconfig.yaml
+mock-server

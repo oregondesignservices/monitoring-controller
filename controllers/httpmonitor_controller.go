@@ -77,6 +77,8 @@ func (r *HttpMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		return reconcile.Result{}, err
 	}
 
+	logger = logger.WithValues("period", instance.Spec.Period.Duration.String())
+
 	if instance.Spec.Environment == nil {
 		instance.Spec.Environment = make(map[string]string)
 	}

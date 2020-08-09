@@ -1,0 +1,12 @@
+apiVersion: monitoring.raisingthefloor.org/v1alpha1
+kind: HttpMonitor
+metadata:
+  name: simplest-possible
+spec:
+  period: 1s
+  requests:
+    - name: get 200
+      method: GET
+      url: "http://mock-server.default.svc.cluster.local/simplest"
+      target_service: "mock"
+      expected_response_codes: [200]
