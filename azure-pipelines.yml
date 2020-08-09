@@ -49,6 +49,8 @@ stages:
       - job: kube_test
         steps:
           - task: Bash@3
+            env:
+              KUBECONFIG: "kind-kubeconfig.yaml"
             inputs:
               targetType: 'inline'
               script: |
@@ -60,9 +62,12 @@ stages:
                 chmod +x ./kind
 
                 sh kind-up.sh
+                ls -al
                 tilt ci
           - task: Bash@3
             condition: always()
+            env:
+              KUBECONFIG: "kind-kubeconfig.yaml"
             inputs:
               targetType: 'inline'
               script: |
