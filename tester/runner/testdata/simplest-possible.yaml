@@ -4,11 +4,9 @@ metadata:
   name: simplest-possible
 spec:
   period: 1s
-  environment:
-    BASE_URL: "http://http-test-server.default.svc.cluster.local"
   requests:
     - name: get 200
       method: GET
-      url: "{BASE_URL}/simplest"
+      url: "http://mock-server.default.svc.cluster.local/simplest"
+      target_service: "mock"
       expected_response_codes: [200]
-

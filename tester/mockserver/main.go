@@ -4,43 +4,19 @@ package main
 import (
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/oregondesignservices/monitoring-controller/tester/common"
 	"go.uber.org/zap"
 	"net/http"
-	"net/url"
 )
 
 var logger *zap.SugaredLogger
 
 func init() {
-	l, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	logger = l.Sugar()
+	logger = common.Logger()
 }
 
-type RequestDatum struct {
-	CallCount          uint
-	LastRequestHeaders http.Header
-	LastQueryParams    url.Values
-}
-
-type ConfiguredResponse struct {
-	Status  int
-	Body    []byte
-	Headers http.Header
-}
-
-func buildKey(r *http.Request) string {
-	return r.URL.Path + "::" + r.Method
-}
-
-type ConfiguredResponses map[string]ConfiguredResponse
-
-type RequestData map[string]*RequestDatum
-
-var howToRespond = ConfiguredResponses{}
-var capturedRequests = RequestData{}
+var howToRespond = common.MockResponses{}
+var capturedRequests = common.CapturedRequests{}
 
 func main() {
 	logger.Info("starting...")
@@ -50,33 +26,27 @@ func main() {
 
 	http.HandleFunc("/", RootHandler)
 	http.HandleFunc("/reset", ResetHandler)
+	http.HandleFunc("/set", SetHandler)
 	http.HandleFunc("/data", DataHandler)
 	http.HandleFunc("/health", HealthHandler)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":80", nil); err != nil {
 		logger.Error("ListenAndServe returned an error", zap.Error(err))
 	}
 }
 
 // Returns responses
 func RootHandler(w http.ResponseWriter, r *http.Request) {
-	key := buildKey(r)
-	entry := logger.With(zap.String("key", key))
+	entry := logger.With(zap.String("uriPath", r.URL.Path), zap.String("method", r.Method))
 
 	// Record the request
-	if _, exists := capturedRequests[key]; !exists {
-		capturedRequests[key] = &RequestDatum{}
-	}
-
-	capturedRequests[key].CallCount++
-	capturedRequests[key].LastRequestHeaders = r.Header
-	capturedRequests[key].LastQueryParams = r.URL.Query()
+	capturedRequests.Record(r)
 
 	// Figure out how to respond.
-	response, exists := howToRespond[key]
+	response, exists := howToRespond.Get(r)
 	if !exists {
 		entry.Info("I have not been told how to respond")
 		w.WriteHeader(http.StatusNotFound)
-		_, err := fmt.Fprintf(w, "I have not been told how to respond to '%s'", key)
+		_, err := fmt.Fprintf(w, "I have not been told how to respond to '%s'", common.BuildKeyFromRequest(r))
 		if err != nil {
 			entry.Error("failed to encode response", zap.Error(err))
 		}
@@ -96,11 +66,25 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// configure how to respond
+func SetHandler(w http.ResponseWriter, r *http.Request) {
+	config := &common.MockResponse{}
+	err := jsoniter.NewDecoder(r.Body).Decode(&config)
+	if err != nil {
+		logger.Error("failed to decode response", zap.Error(err))
+		w.WriteHeader(500)
+		return
+	}
+	key := common.BuildKey(config.UriPath, config.Method)
+	logger.Info("I have been told how to respond", zap.String("key", key))
+	howToRespond[key] = config
+}
+
 // Reset all data
 func ResetHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Info("resetting request and response data")
-	howToRespond = ConfiguredResponses{}
-	capturedRequests = RequestData{}
+	howToRespond = common.MockResponses{}
+	capturedRequests = common.CapturedRequests{}
 }
 
 // Get the data
@@ -114,4 +98,5 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	// does nothing. just need a 200 handler
+	w.WriteHeader(http.StatusOK)
 }

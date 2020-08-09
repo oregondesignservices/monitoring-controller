@@ -1,0 +1,14 @@
+apiVersion: monitoring.raisingthefloor.org/v1alpha1
+kind: HttpMonitor
+metadata:
+  name: simplest-possible
+spec:
+  period: 1s
+  environment:
+    BASE_URL: "http://mock-server.default.svc.cluster.local"
+  requests:
+    - name: get 200
+      method: GET
+      url: "{BASE_URL}/simplest-with-var"
+      target_service: "mock"
+      expected_response_codes: [200]

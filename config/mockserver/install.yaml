@@ -1,34 +1,38 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: http-test-server
+  name: mock-server
 spec:
   ports:
     - name: http
       port: 80
       targetPort: http
   selector:
-    app: http-test-server
+    app: mock-server
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: http-test-srver
+  name: mock-server
   namespace: default
   labels:
-    app: http-test-server
+    app: mock-server
 spec:
   selector:
     matchLabels:
-      app: http-test-server
+      app: mock-server
   replicas: 1
   template:
     metadata:
       labels:
-        app: http-test-server
+        app: mock-server
     spec:
       containers:
         - args: []
-          image: localhost:5000/http-test-server
+          image: localhost:5000/mock-server
           name: manager
+          ports:
+            - name: http
+              containerPort: 80
       terminationGracePeriodSeconds: 10
+
