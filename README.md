@@ -21,10 +21,11 @@ See [metrics.go](internal/metrics/metrics.go).
 
 The grafana dashboard may be found in the kustomize-based [deployment repo](https://github.com/oregondesignservices/deploy-monitoring-controller/blob/master/resources/grafana/main-dashboard.json).
 
-## Development
+## Kubebuilder
 
-Uses kubebuilder: https://book-v1.book.kubebuilder.io/
+This project uses [kubebuilder](https://book.kubebuilder.io/) as a way of generating code.
 
+To install kubebuilder:
 ```shell script
 os=$(go env GOOS)
 arch=$(go env GOARCH)
@@ -47,3 +48,23 @@ sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch}/bin/kubebuilder /usr/local/
 1. fill in `api/v1alpha1/[new kind]_types.go`
 1. implement `controllers/[new kind]_controller.go`
 1. `make manifests generate`
+
+## Development
+
+This project uses [KIND](https://kind.sigs.k8s.io/) and [tilt](https://tilt.dev/) for rapid development.
+
+For setup:
+```shell script
+export KUBECONFIG=kind-kubeconfig.yaml
+
+# Sets up a KIND cluster and a local registry connected to it
+sh kind-up.sh
+
+# start tilt. Hit space after to open tilt in your browser (recommended)
+# Local changes will automatically be built and pushed to kube.
+tilt up
+
+# To shut down:
+tilt down
+sh kind-down.sh
+```
