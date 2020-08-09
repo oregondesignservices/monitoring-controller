@@ -44,6 +44,30 @@ pool:
   vmImage: "ubuntu-18.04"
 
 stages:
+  - stage: test
+    jobs:
+      - job: kube_test
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: |
+                set -e
+                set -x
+
+                curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/v0.17.0/scripts/install.sh | bash
+                curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.8.1/kind-darwin-amd64
+                chmod +x ./kind
+
+                sh kind-up.sh
+                tilt ci
+          - task: Bash@3
+            condition: always()
+            inputs:
+              targetType: 'inline'
+              script: |
+                tilt down
+                sh kind-down.sh
   - stage: docker
     jobs:
       - job: build_and_publish_image

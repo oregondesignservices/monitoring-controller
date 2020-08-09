@@ -47,6 +47,6 @@ k8s_resource(workload='mock-server', port_forwards=["9091:80"])
 # we may want it to watch the source area and build as it changes.
 local_resource('test-runner',
     cmd='go run tester/runner/*',
-    trigger_mode=TRIGGER_MODE_MANUAL,
-    auto_init=False
+    resource_deps=['monitoring-controller-controller-manager', 'mock-server'],
+    deps=["./tester/common", "./tester/runner"]
 )
